@@ -1,5 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Search, Feather, BookOpen, Globe, Lightbulb, Code2, SearchCheck, Camera } from "lucide-react";
+import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { runGemini } from "@/lib/gemini.functions";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -11,17 +15,65 @@ export const Route = createFileRoute("/")({
   }),
 });
 
-const tools = [
-  { icon: Feather, title: "Corrector de Texto", desc: "Refina cada palabra con precisión." },
-  { icon: BookOpen, title: "Resumidor", desc: "La esencia, en segundos." },
-  { icon: Globe, title: "Traductor", desc: "Tu voz, en cualquier idioma." },
-  { icon: Lightbulb, title: "Generador de Ideas", desc: "Inspiración bajo demanda." },
-  { icon: Code2, title: "Programación", desc: "Código limpio y elegante." },
-  { icon: SearchCheck, title: "Buscador Pro", desc: "Resultados curados, sin ruido." },
-  { icon: Camera, title: "Editor de Fotos", desc: "Retoque con maestría." },
+type ToolId = "corrector" | "resumidor" | "traductor" | "ideas" | "codigo" | "buscador" | "foto";
+
+const tools: Array<{
+  id: ToolId;
+  icon: typeof Feather;
+  title: string;
+  desc: string;
+  placeholder: string;
+  needsLanguage?: boolean;
+  disabled?: boolean;
+}> = [
+  { id: "corrector", icon: Feather, title: "Corrector de Texto", desc: "Refina cada palabra con precisión.", placeholder: "Pega aquí el texto a corregir…" },
+  { id: "resumidor", icon: BookOpen, title: "Resumidor", desc: "La esencia, en segundos.", placeholder: "Pega el texto que deseas resumir…" },
+  { id: "traductor", icon: Globe, title: "Traductor", desc: "Tu voz, en cualquier idioma.", placeholder: "Texto a traducir…", needsLanguage: true },
+  { id: "ideas", icon: Lightbulb, title: "Generador de Ideas", desc: "Inspiración bajo demanda.", placeholder: "Describe el tema o reto…" },
+  { id: "codigo", icon: Code2, title: "Programación", desc: "Código limpio y elegante.", placeholder: "Describe lo que necesitas programar…" },
+  { id: "buscador", icon: SearchCheck, title: "Buscador Pro", desc: "Resultados curados, sin ruido.", placeholder: "¿Qué quieres investigar?" },
+  { id: "foto", icon: Camera, title: "Editor de Fotos", desc: "Próximamente.", placeholder: "", disabled: true },
 ];
 
 function Index() {
+  const [active, setActive] = useState<(typeof tools)[number] | null>(null);
+  const [input, setInput] = useState("");
+  const [language, setLanguage] = useState("Inglés");
+  const [output, setOutput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const callGemini = useServerFn(runGemini);
+
+  const openTool = (t: (typeof tools)[number]) => {
+    if (t.disabled) return;
+    setActive(t);
+    setInput("");
+    setOutput("");
+    setError(null);
+  };
+
+  const submit = async () => {
+    if (!active || active.id === "foto" || !input.trim()) return;
+    setLoading(true);
+    setError(null);
+    setOutput("");
+    try {
+      const res = await callGemini({
+        data: {
+          toolId: active.id,
+          input: input.trim(),
+          extra: active.needsLanguage ? language : undefined,
+        },
+      });
+      if (res.ok) setOutput(res.text || "(sin respuesta)");
+      else setError(res.error);
+    } catch (e) {
+      setError("Error inesperado.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground font-[Inter,sans-serif] relative overflow-hidden">
       {/* Subtle gold ambience */}
@@ -105,17 +157,18 @@ function Index() {
 
         {/* Tools grid */}
         <section className="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {tools.map(({ icon: Icon, title, desc }) => (
+          {tools.map((t) => (
             <article
-              key={title}
-              className="group relative rounded-sm bg-[oklch(0.08_0_0)] p-8 cursor-pointer transition-all duration-500 hover:bg-[oklch(0.10_0_0)]"
+              key={t.id}
+              onClick={() => openTool(t)}
+              className={`group relative rounded-sm bg-[oklch(0.08_0_0)] p-8 transition-all duration-500 ${t.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-[oklch(0.10_0_0)]"}`}
               style={{ border: "1px solid oklch(0.72 0.10 80 / 0.18)" }}
             >
               <div
                 className="absolute inset-x-0 top-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 style={{ background: "linear-gradient(90deg, transparent, var(--gold), transparent)" }}
               />
-              <Icon
+              <t.icon
                 className="h-7 w-7 text-[color:var(--gold)] mb-6 transition-transform duration-500 group-hover:-translate-y-0.5"
                 strokeWidth={1}
               />
@@ -123,15 +176,15 @@ function Index() {
                 className="font-[Cormorant_Garamond,serif] text-xl text-foreground font-light mb-2"
                 style={{ letterSpacing: "0.05em" }}
               >
-                {title}
+                {t.title}
               </h3>
               <p className="text-xs text-muted-foreground font-light tracking-wide leading-relaxed">
-                {desc}
+                {t.desc}
               </p>
               <span
                 className="mt-6 inline-block text-[0.6rem] uppercase tracking-[0.35em] text-[color:var(--gold)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
               >
-                Explorar →
+                {t.disabled ? "Pronto" : "Explorar →"}
               </span>
             </article>
           ))}
@@ -147,6 +200,68 @@ function Index() {
           </p>
         </footer>
       </main>
+
+      <Dialog open={!!active} onOpenChange={(o) => !o && setActive(null)}>
+        <DialogContent
+          className="max-w-2xl bg-[oklch(0.07_0_0)] text-foreground"
+          style={{ border: "1px solid var(--gold-soft)" }}
+        >
+          <DialogHeader>
+            <DialogTitle
+              className="font-[Cormorant_Garamond,serif] text-2xl font-light"
+              style={{ letterSpacing: "0.08em" }}
+            >
+              {active?.title}
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground text-xs tracking-wide">
+              {active?.desc}
+            </DialogDescription>
+          </DialogHeader>
+
+          {active?.needsLanguage && (
+            <input
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              placeholder="Idioma destino (Inglés, Francés, Japonés…)"
+              className="w-full rounded-sm bg-[oklch(0.05_0_0)] px-4 py-2 text-sm outline-none font-light"
+              style={{ border: "1px solid var(--gold-soft)" }}
+            />
+          )}
+
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={active?.placeholder}
+            rows={5}
+            className="w-full rounded-sm bg-[oklch(0.05_0_0)] px-4 py-3 text-sm outline-none font-light resize-y"
+            style={{ border: "1px solid var(--gold-soft)" }}
+          />
+
+          <div className="flex justify-end">
+            <button
+              onClick={submit}
+              disabled={loading || !input.trim()}
+              className="px-6 py-2 text-[0.7rem] uppercase tracking-[0.3em] text-[color:var(--gold)] hover:text-foreground transition-colors font-light disabled:opacity-40"
+              style={{ border: "1px solid var(--gold-soft)" }}
+            >
+              {loading ? "Procesando…" : "Generar"}
+            </button>
+          </div>
+
+          {error && (
+            <p className="text-xs text-destructive-foreground bg-destructive/20 p-3 rounded-sm">{error}</p>
+          )}
+
+          {output && (
+            <div
+              className="max-h-80 overflow-auto rounded-sm bg-[oklch(0.05_0_0)] p-4 text-sm font-light whitespace-pre-wrap leading-relaxed"
+              style={{ border: "1px solid var(--gold-soft)" }}
+            >
+              {output}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
