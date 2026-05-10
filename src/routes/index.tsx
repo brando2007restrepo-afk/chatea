@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Search, Feather, BookOpen, Globe, Lightbulb, Code2, SearchCheck, Camera } from "lucide-react";
+import { Search, Feather, BookOpen, Globe, Lightbulb, Code2, SearchCheck, Camera, Upload } from "lucide-react";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -32,7 +32,7 @@ const tools: Array<{
   { id: "ideas", icon: Lightbulb, title: "Generador de Ideas", desc: "Inspiración bajo demanda.", placeholder: "Describe el tema o reto…" },
   { id: "codigo", icon: Code2, title: "Programación", desc: "Código limpio y elegante.", placeholder: "Describe lo que necesitas programar…" },
   { id: "buscador", icon: SearchCheck, title: "Buscador Pro", desc: "Resultados curados, sin ruido.", placeholder: "¿Qué quieres investigar?" },
-  { id: "foto", icon: Camera, title: "Editor de Fotos", desc: "Próximamente.", placeholder: "", disabled: true },
+  { id: "foto", icon: Camera, title: "Editor de Fotos", desc: "Carga una imagen para comenzar.", placeholder: "" },
 ];
 
 function Index() {
@@ -53,7 +53,8 @@ function Index() {
   };
 
   const submit = async () => {
-    if (!active || active.id === "foto" || !input.trim()) return;
+    if (!active || active.id === "foto") return;
+    if (!input.trim()) return;
     setLoading(true);
     setError(null);
     setOutput("");
@@ -161,7 +162,7 @@ function Index() {
             <article
               key={t.id}
               onClick={() => openTool(t)}
-              className={`group relative rounded-sm bg-[oklch(0.08_0_0)] p-8 transition-all duration-500 ${t.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-[oklch(0.10_0_0)]"}`}
+              className="group relative rounded-sm bg-[oklch(0.08_0_0)] p-8 transition-all duration-500 cursor-pointer hover:bg-[oklch(0.10_0_0)]"
               style={{ border: "1px solid oklch(0.72 0.10 80 / 0.18)" }}
             >
               <div
@@ -184,7 +185,7 @@ function Index() {
               <span
                 className="mt-6 inline-block text-[0.6rem] uppercase tracking-[0.35em] text-[color:var(--gold)] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
               >
-                {t.disabled ? "Pronto" : "Explorar →"}
+                Explorar →
               </span>
             </article>
           ))}
@@ -218,6 +219,30 @@ function Index() {
             </DialogDescription>
           </DialogHeader>
 
+          {active?.id === "foto" ? (
+            <div className="py-6">
+              <label
+                htmlFor="chatea-photo-upload"
+                className="flex flex-col items-center justify-center gap-4 py-16 rounded-sm cursor-pointer transition-colors hover:bg-[oklch(0.05_0_0)]"
+                style={{ border: "1px dashed var(--gold-soft)" }}
+              >
+                <Upload className="h-8 w-8 text-[color:var(--gold)]" strokeWidth={1} />
+                <span
+                  className="font-[Cormorant_Garamond,serif] italic text-lg text-foreground"
+                >
+                  Arrastra tu imagen aquí
+                </span>
+                <span className="text-[0.65rem] uppercase tracking-[0.4em] text-muted-foreground">
+                  o haz clic para seleccionar
+                </span>
+                <input id="chatea-photo-upload" type="file" accept="image/*" className="hidden" />
+              </label>
+              <p className="mt-6 text-center text-[0.65rem] uppercase tracking-[0.35em] text-[color:var(--gold)]">
+                Edición fotográfica · Próximamente
+              </p>
+            </div>
+          ) : (
+            <>
           {active?.needsLanguage && (
             <input
               value={language}
@@ -254,11 +279,14 @@ function Index() {
 
           {output && (
             <div
-              className="max-h-80 overflow-auto rounded-sm bg-[oklch(0.05_0_0)] p-4 text-sm font-light whitespace-pre-wrap leading-relaxed"
+              key={output}
+              className="animate-fade-in max-h-96 overflow-auto rounded-sm bg-[oklch(0.05_0_0)] px-10 py-8 font-[Cormorant_Garamond,serif] text-[1.05rem] leading-[1.85] tracking-wide text-foreground whitespace-pre-wrap"
               style={{ border: "1px solid var(--gold-soft)" }}
             >
               {output}
             </div>
+          )}
+            </>
           )}
         </DialogContent>
       </Dialog>
