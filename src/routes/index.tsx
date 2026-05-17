@@ -144,7 +144,7 @@ function Index() {
               className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-base tracking-wide font-light"
             />
             <button
-              className="text-[0.7rem] uppercase tracking-[0.3em] text-[color:var(--gold)] hover:text-foreground transition-colors font-light"
+              className="text-[0.7rem] uppercase tracking-[0.3em] text-[color:var(--gold)] hover:text-foreground transition-all duration-500 font-light"
             >
               Iniciar
             </button>
