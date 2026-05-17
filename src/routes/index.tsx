@@ -268,7 +268,7 @@ function Index() {
             <button
               onClick={submit}
               disabled={loading || !input.trim()}
-              className="px-6 py-2 text-[0.7rem] uppercase tracking-[0.3em] text-[color:var(--gold)] hover:text-foreground transition-colors font-light disabled:opacity-40"
+              className="px-6 py-2 text-[0.7rem] uppercase tracking-[0.3em] text-[color:var(--gold)] hover:text-foreground transition-all duration-500 font-light disabled:opacity-40"
               style={{ border: "1px solid var(--gold-soft)" }}
             >
               {loading ? "Procesando…" : "Generar"}
