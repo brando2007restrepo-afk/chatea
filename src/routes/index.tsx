@@ -42,6 +42,8 @@ function Index() {
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [photoDragging, setPhotoDragging] = useState(false);
+  const [photoProcessing, setPhotoProcessing] = useState(false);
   const callGemini = useServerFn(runGemini);
 
   const openTool = (t: (typeof tools)[number]) => {
