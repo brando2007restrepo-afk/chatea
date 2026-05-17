@@ -225,18 +225,44 @@ function Index() {
             <div className="py-6">
               <label
                 htmlFor="chatea-photo-upload"
-                className="flex flex-col items-center justify-center gap-4 py-16 rounded-sm cursor-pointer transition-colors hover:bg-[oklch(0.05_0_0)]"
-                style={{ border: "1px dashed var(--gold-soft)" }}
+                onDragEnter={(e) => { e.preventDefault(); setPhotoDragging(true); }}
+                onDragOver={(e) => { e.preventDefault(); setPhotoDragging(true); }}
+                onDragLeave={(e) => { e.preventDefault(); setPhotoDragging(false); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setPhotoDragging(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    setPhotoProcessing(true);
+                    setTimeout(() => setPhotoProcessing(false), 3000);
+                  }
+                }}
+                className={`flex flex-col items-center justify-center gap-5 aspect-square max-w-sm mx-auto rounded-sm cursor-pointer transition-all duration-500 ${
+                  photoDragging ? "bg-[oklch(0.05_0_0)]" : "hover:bg-[oklch(0.05_0_0)]"
+                }`}
+                style={{
+                  border: photoDragging
+                    ? "2px dashed var(--gold)"
+                    : "2px dashed var(--gold-soft)",
+                }}
               >
-                <Upload className="h-8 w-8 text-[color:var(--gold)]" strokeWidth={1} />
-                <span
-                  className="font-[Cormorant_Garamond,serif] italic text-lg text-foreground"
-                >
-                  Arrastra tu imagen aquí
-                </span>
-                <span className="text-[0.65rem] uppercase tracking-[0.4em] text-muted-foreground">
-                  o haz clic para seleccionar
-                </span>
+                {photoProcessing ? (
+                  <>
+                    <div className="h-8 w-8 rounded-full border-2 border-[color:var(--gold-soft)] border-t-[color:var(--gold)] animate-spin" />
+                    <span className="font-[Cormorant_Garamond,serif] italic text-xl text-foreground">
+                      Procesando imagen con IA...
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8 text-[color:var(--gold)]" strokeWidth={1} />
+                    <span className="font-[Cormorant_Garamond,serif] italic text-xl text-foreground">
+                      Arrastra tu imagen aquí
+                    </span>
+                    <span className="text-[0.65rem] uppercase tracking-[0.4em] text-muted-foreground">
+                      o haz clic para seleccionar
+                    </span>
+                  </>
+                )}
                 <input id="chatea-photo-upload" type="file" accept="image/*" className="hidden" />
               </label>
               <p className="mt-6 text-center text-[0.65rem] uppercase tracking-[0.35em] text-[color:var(--gold)]">
