@@ -308,8 +308,13 @@ function Index() {
           {output && (
             <div
               key={output}
-              className="animate-fade-in max-h-96 overflow-auto rounded-sm bg-[oklch(0.05_0_0)] px-10 py-8 font-[Cormorant_Garamond,serif] text-[1.05rem] leading-[1.85] tracking-wide text-foreground whitespace-pre-wrap"
-              style={{ border: "1px solid var(--gold-soft)" }}
+              className="animate-fade-in max-h-96 overflow-auto rounded-sm px-10 py-8 font-[Cormorant_Garamond,serif] text-[1.05rem] leading-[1.85] tracking-wide whitespace-pre-wrap"
+              style={{
+                background: "oklch(0 0 0)",
+                color: "var(--gold)",
+                border: "1px solid var(--gold-soft)",
+                boxShadow: "var(--shadow-luxe)",
+              }}
             >
               {output}
             </div>
